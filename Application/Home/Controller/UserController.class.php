@@ -6,6 +6,11 @@ class UserController extends BaseController {
 
 	//注册
 	public function register(){
+
+        //跳转到web目录
+        header("location:./web/#/user/register");
+        exit();
+
 		if (!IS_POST) {
 			  $this->assign('CloseVerify',C('CloseVerify'));
 			  $this->display ();
@@ -22,7 +27,7 @@ class UserController extends BaseController {
 						if ($ret) {
 					      $this->message(L('register_succeeded'),U('Home/User/login'));					    
 						}else{
-						  $this->message(L('username_or_password_incorrect'));
+						  $this->message('register fail');
 						}
 			  		}else{
 			  			$this->message(L('username_exists'));
@@ -44,12 +49,19 @@ class UserController extends BaseController {
 	//登录
 	public function login()
 	{
+
+        //跳转到web目录
+        header("location:./web/#/user/login");
+        exit();
+        
+
 		if (!IS_POST) {
 			//如果有cookie记录，则自动登录
 			$cookie_token = cookie('cookie_token');
 			if ($cookie_token) {
 				$ret = D("UserToken")->getToken($cookie_token);
 				if ($ret && $ret['token_expire'] > time() ) {
+					D("User")->setLastTime($ret['uid']);
 					$login_user = D("User")->where(array('uid' => $ret['uid']))->field('password', true)->find();
 					session("login_user" , $login_user);
 					$this->message(L('auto_login_succeeded'),U('Home/Item/index'));
@@ -67,6 +79,7 @@ class UserController extends BaseController {
 		  	$ret = D("User")->checkLogin($username,$password);
 		    if ($ret) {
 		      session("login_user" , $ret );
+		      D("User")->setLastTime($ret['uid']);
 		      $token = D("UserToken")->createToken($ret['uid']);
 	          cookie('cookie_token',$token,60*60*24*90);//此处由服务端控制token是否过期，所以cookies过期时间设置多久都无所谓
 		      unset($ret['password']);
@@ -79,6 +92,7 @@ class UserController extends BaseController {
 			    $ret = D("User")->checkLogin($username,$password);
 			    if ($ret) {
 			      session("login_user" , $ret );
+			  D("User")->setLastTime($ret['uid']);
 		      	  $token = D("UserToken")->createToken($ret['uid']);
           		  cookie('cookie_token',$token,60*60*24*90);//此处由服务端控制token是否过期，所以cookies过期时间设置多久都无所谓
 			      unset($ret['password']);

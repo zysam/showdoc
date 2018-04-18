@@ -1,7 +1,7 @@
 <include file="Common/header" />
 <link href="__PUBLIC__/highlight/default.min.css" rel="stylesheet"> 
 <link href="__PUBLIC__/lightbox/css/lightbox.css?v=1.1234567" rel="stylesheet"> 
-<link rel="stylesheet" href="__PUBLIC__/css/item/show_single_page.css" />
+<link rel="stylesheet" href="__PUBLIC__/css/item/show_single_page.css?v=2" />
 
 <div id="header">
 
@@ -25,7 +25,7 @@
               </a>
             <ul class="dropdown-menu">
             <!-- dropdown menu links -->
-               <li><a href="{:U('Home/Item/word',array('item_id'=>$item['item_id']))}">{$Think.Lang.export}</a></li>
+               <li><a href="{:U('Home/Item/export',array('item_id'=>$item['item_id']))}">{$Think.Lang.export}</a></li>
              <if condition="$ItemCreator">
                 <li><a href="{:U('Home/Item/setting',array('item_id'=>$item['item_id']))}">项目设置</a></li>          
               </if>

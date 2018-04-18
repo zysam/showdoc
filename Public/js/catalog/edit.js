@@ -10,7 +10,7 @@ $(function(){
 
   function getCatList(){
       $.get(
-        "?s=home/catalog/catList",
+        DocConfig.server+"/api/catalog/catList",
         { "item_id": item_id },
         function(data){
           $("#show-second-cat").html('');
@@ -47,7 +47,7 @@ $(function(){
     var default_parent_cat_id = $("#default_parent_cat_id").val();
     var item_id = $("#item_id").val();
     $.get(
-      "?s=home/catalog/secondCatList", 
+      DocConfig.server+"/api/catalog/secondCatList", 
       {"item_id": item_id},
       function(data) {
         $("#parent_cat_id").html('<OPTION value="0">'+lang["none"]+'</OPTION>');
@@ -79,7 +79,7 @@ $(function(){
       var cat_id = $("#cat_id").val();
       var parent_cat_id = $("#parent_cat_id").val();
       $.post(
-        "?s=home/catalog/save",
+        DocConfig.server+"/api/catalog/save",
         {"cat_name": cat_name , "s_number": s_number , "item_id": item_id , "cat_id": cat_id, "parent_cat_id": parent_cat_id  },
         function(data){
           if (data.error_code == 0) {
@@ -91,7 +91,7 @@ $(function(){
             secondCatList();
             //alert(lang["save_success"]);
           }else{
-            layer.alert(lang["save_fail"]);
+            $.alert(lang["save_fail"]);
           }
           getCatList();
         },
@@ -103,11 +103,11 @@ $(function(){
 
   //删除目录
   $("#delete-cat").click(function(){
-    layer.confirm(lang["confirm_to_delete"],{},function(){
+    $.confirm(lang["confirm_to_delete"],{},function(){
         var cat_id = $("#cat_id").val();
         if (cat_id > 0 ) {
             $.post(
-                "?s=home/catalog/delete",
+                DocConfig.server+"/api/catalog/delete",
                 { "cat_id": cat_id  },
                 function(data){
                   if (data.error_code == 0) {
@@ -115,9 +115,9 @@ $(function(){
                     window.location.href="?s=home/catalog/edit&item_id="+item_id;
                   }else{
                     if (data.error_message) {
-                      layer.alert(data.error_message);
+                      $.alert(data.error_message);
                     }else{
-                      layer.alert(lang["delete_fail"]);
+                      $.alert(lang["delete_fail"]);
                     }
                     
                   }

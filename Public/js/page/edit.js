@@ -17,7 +17,7 @@ $(function() {
     var default_second_cat_id = $("#default_second_cat_id").val();
     var item_id = $("#item_id").val();
     $.post(
-      "?s=home/catalog/secondCatList", {
+      DocConfig.server+"/api/catalog/secondCatList", {
         "item_id": item_id,
       },
       function(data) {
@@ -47,7 +47,7 @@ $(function() {
     var cat_id = $("#cat_id").val();
     var default_child_cat_id = $("#default_child_cat_id").val();
     $.post(
-      "?s=home/catalog/childCatList", {
+      DocConfig.server+"/api/catalog/childCatList", {
         "cat_id": cat_id
       },
       function(data) {
@@ -112,6 +112,7 @@ $(function() {
     tex: true, // 默认不解析
     flowChart: true, // 默认不解析
     sequenceDiagram: true, // 默认不解析
+    htmlDecode : "style,script,iframe|filterXSS",//解析html
     imageUpload: true,
     imageFormats: ["jpg", "jpeg", "gif", "png", "bmp", "webp", "JPG", "JPEG", "GIF", "PNG", "BMP", "WEBP"],
     imageUploadURL: "?s=home/page/uploadImg",
@@ -219,7 +220,11 @@ $(function() {
           dumped_text += dump(value, level + 1);
           dumped_text += level_padding + "\}";
         } else {
-          dumped_text += level_padding + "\"" + item + "\" : \"" + value + "\"";
+          if (typeof(value) == "number") {
+            dumped_text += level_padding + "\"" + item + "\" : " + value ;
+          }else{
+            dumped_text += level_padding + "\"" + item + "\" : \"" + value + "\"";
+          }
         }
         if (i < Object.getOwnPropertyNames(arr).length - 1) {
           dumped_text += ", \n";
@@ -235,9 +240,7 @@ $(function() {
   }
 
   /*保存*/
-  var saving = false;
   $("#save").click(function() {
-    if (saving) return false;
     var page_id = $("#page_id").val();
     var item_id = $("#item_id").val();
     var page_title = $("#page_title").val();
@@ -250,9 +253,9 @@ $(function() {
     if (parent_cat_id > 0) {
       cat_id = parent_cat_id;
     };
-    saving = true;
+    $("#save").html('保存中...').attr('disabled','disabled');
     $.post(
-      "?s=home/page/save", {
+      DocConfig.server+"/api/page/save", {
         "page_id": page_id,
         "cat_id": cat_id,
         "s_number": s_number,
@@ -263,13 +266,13 @@ $(function() {
       },
       function(data) {
         if (data.error_code == 0) {
-          $.bootstrapGrowl(lang["save_success"]);
+          localStorage.removeItem("page_content");
           window.location.href = "?s=home/item/show&page_id=" + data.data.page_id + "&item_id=" + item_id;
         } else {
-          $.bootstrapGrowl(lang["save_fail"]);
+          $.alert(lang["save_fail"]);
+          $("#save").html('保存').removeAttr('disabled');
 
         }
-        saving = false;
       },
       'json'
     )
@@ -336,7 +339,7 @@ $(function() {
   //{"Result":[{"name":"test1","list":{"pros":"prosfsf","ppps":{"images":[{"22":"22"}]}}}]}
 
   $("#save-to-templ").click(function() {
-    layer.prompt({
+    $.prompt({
       title: lang["save_templ_title"]
     }, function(template_title, index) {
       if (template_title != null && template_title != "") {
@@ -348,10 +351,10 @@ $(function() {
           },
           function(data) {
             if (data.error_code == 0) {
-              layer.close(index);
-              layer.alert(lang["saved_templ_msg1"] + template_title + lang["saved_templ_msg2"]);
+              $.closeDialog(index);
+              $.alert(lang["saved_templ_msg1"] + template_title + lang["saved_templ_msg2"]);
             } else {
-              $.bootstrapGrowl(lang["save_fail"]);
+              $.alert(lang["save_fail"]);
 
             }
           },
@@ -380,9 +383,9 @@ $(function() {
           $("#templ-table").html(html);
           $("#more-templ-modal").modal();
         } else {
-          //$.bootstrapGrowl("获取模板列表失败");
+          //$.alert("获取模板列表失败");
           $("#more-templ-modal").modal("hide");
-          layer.alert(lang["no_templ_msg"]);
+          $.alert(lang["no_templ_msg"]);
 
         }
       },
@@ -424,18 +427,18 @@ $(function() {
               // 服务器返回错误
             case 'error':
               $the.attr('disabled', false);
-              layer.close(layer_index);
-              layer.alert('图片上传失败');
+              $.closeDialog(layer_index);
+              $.alert('图片上传失败');
               break;
               // 上传成功
             case 'success':
               $the.attr('disabled', false);
-              layer.close(layer_index);
+              $.closeDialog(layer_index);
               if (data.success == 1) {
                 var value = '![](' + data.url + ')';
                 editormd.insertValue(value);
               } else {
-                layer.alert(data.message);
+                $.alert(data.message);
               }
 
               break;
@@ -468,6 +471,28 @@ $(function() {
     $(this).attr("accept","image/png,image/jpg,image/jpeg,imge/bmp,image/gif")
   });
 
+  //定时保存文本内容到localStorage
+  setInterval(function(){
+      localStorage.page_content= $("#page_content").val() ;
+  }, 60000);
+
+  //检测是否有定时保存的内容
+  if (localStorage.page_content && localStorage.page_content.length > 0) {
+    $.confirm("检测到有上次编辑时自动保存的草稿。是否自动填充上次的草稿内容？",
+      {},
+      function(){
+        editormd.clear();
+        editormd.insertValue(localStorage.page_content);
+        $.closeAll();
+        localStorage.removeItem("page_content");
+      },
+      function(){
+        localStorage.removeItem("page_content");
+      }
+
+    )
+  };
+
   
 });
 
@@ -492,7 +517,7 @@ $(function() {
         if (data.error_code == 0) {
           $("#more-templ").click();
         } else {
-          $.bootstrapGrowl(lang["save_fail"]);
+          $.alert(lang["save_fail"]);
         }
       },
       "json"
